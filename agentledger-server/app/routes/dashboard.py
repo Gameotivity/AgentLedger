@@ -121,17 +121,17 @@ async def dashboard(
     # Spend trend (last 30 days)
     trend_rows = await db.execute(
         select(
-            func.date_trunc("day", Event.created_at).label("day"),
+            func.date(Event.created_at).label("day"),
             func.sum(Event.cost_usd).label("cost"),
             func.count(Event.id).label("calls"),
         )
         .where(Event.project_id == project, Event.event_type == "llm_call")
-        .group_by(func.date_trunc("day", Event.created_at))
-        .order_by(func.date_trunc("day", Event.created_at))
+        .group_by(func.date(Event.created_at))
+        .order_by(func.date(Event.created_at))
         .limit(30)
     )
     spend_trend = [
-        {"date": str(r.day.date()), "cost": round(r.cost, 4), "calls": r.calls}
+        {"date": str(r.day), "cost": round(r.cost, 4), "calls": r.calls}
         for r in trend_rows.all()
     ]
 

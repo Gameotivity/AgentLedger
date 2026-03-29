@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 class EventIn(BaseModel):
     type: str = Field(default="llm_call", description="Event type: llm_call or task_span")
+    project: str = "default"
     agent_name: str
     task_name: str | None = None
     task_id: str | None = None

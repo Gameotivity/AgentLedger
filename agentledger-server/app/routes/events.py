@@ -68,7 +68,7 @@ async def ingest_events(batch: EventBatchIn, db: AsyncSession = Depends(get_db))
     for ev in batch.events:
         cost = ev.cost_usd if ev.cost_usd > 0 else _compute_cost(ev.model, ev.tokens_in, ev.tokens_out)
         event = Event(
-            project_id=ev.metadata.get("project", "default") if ev.metadata else "default",
+            project_id=ev.project,
             event_type=ev.type,
             agent_name=ev.agent_name,
             task_name=ev.task_name,

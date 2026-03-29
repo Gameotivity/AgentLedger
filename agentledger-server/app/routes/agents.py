@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -26,7 +26,7 @@ async def list_agents(
             func.sum(Event.tokens_in + Event.tokens_out).label("total_tokens"),
             func.count(Event.id).label("call_count"),
             func.avg(Event.latency_ms).label("avg_latency"),
-            func.mode().within_group(Event.model).label("top_model"),
+            Event.model.label("top_model"),
         )
         .where(Event.project_id == project, Event.event_type == "llm_call")
         .group_by(Event.agent_name)
@@ -36,7 +36,6 @@ async def list_agents(
 
     agents = []
     for row in rows:
-        # Get waste cost for this agent
         waste_result = await db.execute(
             select(func.coalesce(func.sum(WasteFlag.estimated_waste_usd), 0.0))
             .where(WasteFlag.project_id == project, WasteFlag.agent_name == row.agent_name)
@@ -97,18 +96,18 @@ async def agent_costs(
         for r in model_result.all()
     ]
 
-    # By day
+    # By day (SQLite-compatible: use date() instead of date_trunc)
     period_result = await db.execute(
         select(
-            func.date_trunc("day", Event.created_at).label("day"),
+            func.date(Event.created_at).label("day"),
             func.sum(Event.cost_usd).label("cost"),
             func.count(Event.id).label("calls"),
         )
         .where(Event.project_id == project, Event.agent_name == name, Event.event_type == "llm_call")
-        .group_by(func.date_trunc("day", Event.created_at))
-        .order_by(func.date_trunc("day", Event.created_at))
+        .group_by(func.date(Event.created_at))
+        .order_by(func.date(Event.created_at))
     )
-    by_period = [{"date": str(r.day.date()), "cost": round(r.cost, 4), "calls": r.calls} for r in period_result.all()]
+    by_period = [{"date": str(r.day), "cost": round(r.cost, 4), "calls": r.calls} for r in period_result.all()]
 
     total_cost = sum(t["cost"] for t in by_task)
     total_calls = sum(t["calls"] for t in by_task)

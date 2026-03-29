@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://agentledger:agentledger@localhost:5432/agentledger"
+    database_url: str = "sqlite+aiosqlite:///./agentledger.db"
     redis_url: str = "redis://localhost:6379/0"
     api_key: str | None = None  # if set, all requests must include this key
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
