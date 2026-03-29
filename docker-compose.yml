@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agentledger
+      POSTGRES_PASSWORD: agentledger
+      POSTGRES_DB: agentledger
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentledger"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: agentledger-server/Dockerfile
+    ports:
+      - "8100:8100"
+    environment:
+      AGENTLEDGER_DATABASE_URL: postgresql+asyncpg://agentledger:agentledger@postgres:5432/agentledger
+      AGENTLEDGER_REDIS_URL: redis://redis:6379/0
+      AGENTLEDGER_LOG_LEVEL: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

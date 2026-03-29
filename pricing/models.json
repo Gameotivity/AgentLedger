@@ -1,0 +1,180 @@
+{
+  "_comment": "Community-maintained model pricing database. Costs in USD per 1M tokens. Updated: 2026-03-29",
+  "models": [
+    {
+      "model": "claude-opus-4-6",
+      "provider": "anthropic",
+      "input_cost_per_1m": 15.0,
+      "output_cost_per_1m": 75.0,
+      "tier": 3
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "provider": "anthropic",
+      "input_cost_per_1m": 3.0,
+      "output_cost_per_1m": 15.0,
+      "tier": 2
+    },
+    {
+      "model": "claude-haiku-4-5",
+      "provider": "anthropic",
+      "input_cost_per_1m": 0.80,
+      "output_cost_per_1m": 4.0,
+      "tier": 1
+    },
+    {
+      "model": "claude-sonnet-4-5",
+      "provider": "anthropic",
+      "input_cost_per_1m": 3.0,
+      "output_cost_per_1m": 15.0,
+      "tier": 2
+    },
+    {
+      "model": "claude-opus-4-5",
+      "provider": "anthropic",
+      "input_cost_per_1m": 15.0,
+      "output_cost_per_1m": 75.0,
+      "tier": 3
+    },
+    {
+      "model": "gpt-4o",
+      "provider": "openai",
+      "input_cost_per_1m": 2.50,
+      "output_cost_per_1m": 10.0,
+      "tier": 2
+    },
+    {
+      "model": "gpt-4o-mini",
+      "provider": "openai",
+      "input_cost_per_1m": 0.15,
+      "output_cost_per_1m": 0.60,
+      "tier": 1
+    },
+    {
+      "model": "gpt-4-turbo",
+      "provider": "openai",
+      "input_cost_per_1m": 10.0,
+      "output_cost_per_1m": 30.0,
+      "tier": 3
+    },
+    {
+      "model": "gpt-4.1",
+      "provider": "openai",
+      "input_cost_per_1m": 2.0,
+      "output_cost_per_1m": 8.0,
+      "tier": 2
+    },
+    {
+      "model": "gpt-4.1-mini",
+      "provider": "openai",
+      "input_cost_per_1m": 0.40,
+      "output_cost_per_1m": 1.60,
+      "tier": 1
+    },
+    {
+      "model": "gpt-4.1-nano",
+      "provider": "openai",
+      "input_cost_per_1m": 0.10,
+      "output_cost_per_1m": 0.40,
+      "tier": 1
+    },
+    {
+      "model": "o3",
+      "provider": "openai",
+      "input_cost_per_1m": 10.0,
+      "output_cost_per_1m": 40.0,
+      "tier": 3
+    },
+    {
+      "model": "o3-mini",
+      "provider": "openai",
+      "input_cost_per_1m": 1.10,
+      "output_cost_per_1m": 4.40,
+      "tier": 1
+    },
+    {
+      "model": "o4-mini",
+      "provider": "openai",
+      "input_cost_per_1m": 1.10,
+      "output_cost_per_1m": 4.40,
+      "tier": 1
+    },
+    {
+      "model": "gemini-2.5-pro",
+      "provider": "google",
+      "input_cost_per_1m": 1.25,
+      "output_cost_per_1m": 10.0,
+      "tier": 2
+    },
+    {
+      "model": "gemini-2.5-flash",
+      "provider": "google",
+      "input_cost_per_1m": 0.15,
+      "output_cost_per_1m": 0.60,
+      "tier": 1
+    },
+    {
+      "model": "gemini-2.0-flash",
+      "provider": "google",
+      "input_cost_per_1m": 0.10,
+      "output_cost_per_1m": 0.40,
+      "tier": 1
+    },
+    {
+      "model": "gemini-1.5-pro",
+      "provider": "google",
+      "input_cost_per_1m": 1.25,
+      "output_cost_per_1m": 5.0,
+      "tier": 2
+    },
+    {
+      "model": "gemini-1.5-flash",
+      "provider": "google",
+      "input_cost_per_1m": 0.075,
+      "output_cost_per_1m": 0.30,
+      "tier": 1
+    },
+    {
+      "model": "deepseek-v3",
+      "provider": "deepseek",
+      "input_cost_per_1m": 0.27,
+      "output_cost_per_1m": 1.10,
+      "tier": 1
+    },
+    {
+      "model": "deepseek-r1",
+      "provider": "deepseek",
+      "input_cost_per_1m": 0.55,
+      "output_cost_per_1m": 2.19,
+      "tier": 1
+    },
+    {
+      "model": "llama-3.3-70b",
+      "provider": "meta",
+      "input_cost_per_1m": 0.60,
+      "output_cost_per_1m": 0.60,
+      "tier": 1
+    },
+    {
+      "model": "llama-4-maverick",
+      "provider": "meta",
+      "input_cost_per_1m": 0.50,
+      "output_cost_per_1m": 0.50,
+      "tier": 1
+    },
+    {
+      "model": "mistral-large",
+      "provider": "mistral",
+      "input_cost_per_1m": 2.0,
+      "output_cost_per_1m": 6.0,
+      "tier": 2
+    },
+    {
+      "model": "mistral-small",
+      "provider": "mistral",
+      "input_cost_per_1m": 0.10,
+      "output_cost_per_1m": 0.30,
+      "tier": 1
+    }
+  ]
+}

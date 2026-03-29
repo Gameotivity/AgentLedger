@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentledger-cli"
+version = "0.1.0"
+description = "CLI for AgentLedger — check agent costs, waste, and recommendations from the terminal."
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.24.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+]
+
+[project.scripts]
+agentledger = "agentledger_cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentledger_cli"]
