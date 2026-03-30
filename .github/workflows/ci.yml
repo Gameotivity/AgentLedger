@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check agentledger-sdk/ agentledger-server/ agentledger-cli/
+
+  test-sdk:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e agentledger-sdk[dev]
+      - run: python -c "from agentledger import track, ledger; print('SDK imports OK')"
+      - run: python -c "from agentledger.integrations.litellm import AgentLedgerCallback; print('LiteLLM callback OK')"
+      - run: python -c "from agentledger.pricing import load_pricing, calculate_cost; p = load_pricing(); print(f'Loaded {len(p)} models')"
+
+  test-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install -e agentledger-sdk
+          pip install fastapi uvicorn sqlalchemy aiosqlite pydantic pydantic-settings greenlet httpx
+      - run: |
+          cd agentledger-server
+          PYTHONPATH=. python -c "from app.main import app; print('Server loads OK')"
+      - name: Start server and test endpoints
+        run: |
+          cd agentledger-server
+          PYTHONPATH=. uvicorn app.main:app --port 8100 &
+          sleep 3
+          curl -f http://localhost:8100/health
+          curl -f -X POST http://localhost:8100/api/v1/events \
+            -H "Content-Type: application/json" \
+            -d '{"events":[{"agent_name":"test-agent","model":"gpt-4o","tokens_in":100,"tokens_out":50,"cost_usd":0.001,"project":"ci-test"}]}'
+          curl -f "http://localhost:8100/api/v1/agents?project=ci-test"
+          curl -f "http://localhost:8100/api/v1/dashboard?project=ci-test"
+
+  test-pricing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate pricing JSON
+        run: python -c "import json; json.load(open('pricing/models.json')); print('Pricing JSON valid')"
+      - name: Check pricing completeness
+        run: |
+          python -c "
+          import json
+          data = json.load(open('pricing/models.json'))
+          models = data['models']
+          print(f'Models: {len(models)}')
+          for m in models:
+              assert 'model' in m, f'Missing model key in {m}'
+              assert 'provider' in m, f'Missing provider in {m}'
+              assert 'input_cost_per_1m' in m, f'Missing input cost in {m}'
+              assert 'output_cost_per_1m' in m, f'Missing output cost in {m}'
+              assert 'tier' in m, f'Missing tier in {m}'
+          providers = set(m['provider'] for m in models)
+          print(f'Providers: {sorted(providers)}')
+          print('All pricing entries valid')
+          "

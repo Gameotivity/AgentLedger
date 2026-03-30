@@ -1,0 +1,51 @@
+# LiteLLM Proxy + AgentLedger integration
+#
+# This config makes the LiteLLM Proxy automatically send all cost data
+# to AgentLedger. Every API call routed through the proxy is tracked.
+#
+# Setup:
+#   pip install litellm agentledger
+#   litellm --config proxy_config.yaml
+#
+# Then your team uses the proxy as their LLM gateway, and AgentLedger
+# captures per-agent cost attribution automatically.
+
+model_list:
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GOOGLE_API_KEY
+
+litellm_settings:
+  # Register AgentLedger as a callback
+  callbacks: agentledger.integrations.litellm.callback_instance
+
+  # Optional: also send to other services
+  # callbacks: ["agentledger.integrations.litellm.callback_instance", "langfuse"]
+
+general_settings:
+  # Your team sends requests with metadata to identify their agents:
+  #
+  #   response = litellm.completion(
+  #       model="claude-sonnet",
+  #       messages=[...],
+  #       metadata={"agent": "research-agent", "task": "summarize"}
+  #   )
+  #
+  # AgentLedger extracts agent/task from the metadata automatically.
+  master_key: os.environ/LITELLM_MASTER_KEY
