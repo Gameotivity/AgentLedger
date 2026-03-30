@@ -242,6 +242,17 @@ AgentLedger includes a community-maintained pricing database (`pricing/models.js
 
 PRs to update pricing are always welcome. Costs change frequently.
 
+## Developer Guide
+
+See **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** for the full implementation walkthrough:
+
+- 6 integration paths (decorator, LiteLLM, LangGraph, CrewAI, ADK, raw API)
+- Event schema reference
+- Budget guardrails setup
+- Waste detection deep dive
+- Production deployment config
+- Architecture and data flow
+
 ## Security & Privacy
 
 AgentLedger tracks **cost metadata only**. It does NOT store prompts, completions, or any LLM content. See [SECURITY.md](SECURITY.md) for details.
