@@ -16,7 +16,7 @@ logger = logging.getLogger("agentledger.budget")
 
 async def check_budgets(db: AsyncSession) -> int:
     """Check all enabled budgets and fire alerts for those exceeding thresholds. Returns alert count."""
-    result = await db.execute(select(Budget).where(Budget.enabled == True))
+    result = await db.execute(select(Budget).where(Budget.enabled.is_(True)))
     budgets = result.scalars().all()
 
     alerts_sent = 0

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import threading
 import time
 import uuid
 from contextlib import contextmanager
@@ -172,8 +173,6 @@ class _TrackingContext:
 
 
 # Thread-local context stack for nested tracking
-import threading
-
 _context_stack = threading.local()
 
 

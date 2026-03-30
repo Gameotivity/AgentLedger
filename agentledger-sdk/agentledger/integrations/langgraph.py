@@ -39,10 +39,13 @@ def langgraph_callback(**kwargs: Any):
             if prompts:
                 self._call_prompts[str(run_id)] = prompts[0][:500]
 
-        def on_chat_model_start(self, serialized: dict, messages: list, *, run_id, **kw: Any) -> None:
+        def on_chat_model_start(
+            self, serialized: dict, messages: list, *, run_id, **kw: Any,
+        ) -> None:
             self._call_starts[str(run_id)] = time.perf_counter()
             if messages and messages[0]:
-                content = str(messages[0][0].content)[:500] if hasattr(messages[0][0], "content") else ""
+                msg = messages[0][0]
+                content = str(msg.content)[:500] if hasattr(msg, "content") else ""
                 self._call_prompts[str(run_id)] = content
 
         def on_llm_end(self, response, *, run_id, **kw: Any) -> None:
@@ -58,7 +61,9 @@ def langgraph_callback(**kwargs: Any):
             model = _extract_model(response)
             tokens_in, tokens_out = _extract_tokens(response)
             cost = calculate_cost(model, tokens_in, tokens_out)
-            prompt_hash = hashlib.md5(prompt_text.encode()).hexdigest()[:12] if prompt_text else None
+            prompt_hash = (
+                hashlib.md5(prompt_text.encode()).hexdigest()[:12] if prompt_text else None
+            )
 
             ctx.record_call(
                 model=model,

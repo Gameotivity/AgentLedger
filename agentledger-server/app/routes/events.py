@@ -7,12 +7,11 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.models.tables import Event, ModelPricing
+from app.models.tables import Event
 from app.models.schemas import EventBatchIn, BatchResult
 
 logger = logging.getLogger("agentledger.events")

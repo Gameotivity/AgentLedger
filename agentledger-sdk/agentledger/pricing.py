@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger("agentledger")
 
@@ -14,7 +13,7 @@ _pricing_cache: dict[str, dict[str, float]] | None = None
 
 
 def load_pricing(path: str | Path | None = None) -> dict[str, dict[str, float]]:
-    """Load model pricing from JSON. Returns {model_name: {input_cost_per_1m, output_cost_per_1m}}."""
+    """Load model pricing from JSON. Returns {model: {input/output cost per 1M}}."""
     global _pricing_cache
     if _pricing_cache is not None:
         return _pricing_cache
@@ -30,7 +29,9 @@ def load_pricing(path: str | Path | None = None) -> dict[str, dict[str, float]]:
 
     _pricing_cache = {}
     for entry in data.get("models", []):
-        key = entry.get("model") or f"{entry.get('provider', 'unknown')}/{entry.get('name', 'unknown')}"
+        key = entry.get("model") or (
+            f"{entry.get('provider', 'unknown')}/{entry.get('name', 'unknown')}"
+        )
         _pricing_cache[key] = {
             "input_cost_per_1m": entry.get("input_cost_per_1m", 0.0),
             "output_cost_per_1m": entry.get("output_cost_per_1m", 0.0),

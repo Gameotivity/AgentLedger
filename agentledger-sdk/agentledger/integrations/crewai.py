@@ -18,7 +18,7 @@ def crewai_callback(**kwargs: Any):
         crew = Crew(agents=[...], callbacks=[crewai_callback()])
     """
     try:
-        from crewai.utilities.callbacks import BaseCallback
+        from crewai.utilities.callbacks import BaseCallback  # noqa: F401
     except ImportError:
         # CrewAI callback interface varies by version — fall back to dict-based
         pass

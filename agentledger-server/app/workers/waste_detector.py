@@ -7,7 +7,7 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.tables import Event, WasteFlag
