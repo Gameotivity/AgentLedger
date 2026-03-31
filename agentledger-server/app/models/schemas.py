@@ -26,6 +26,9 @@ class EventIn(BaseModel):
     status: str = "success"
     error: str | None = None
     metadata: dict[str, Any] | None = None
+    # Topology fields — optional, used for Shapley attribution
+    parent_agent: str | None = None
+    context_from: list[str] | None = None
 
 
 class EventBatchIn(BaseModel):
@@ -119,6 +122,52 @@ class BudgetOut(BaseModel):
     webhook_url: str | None
     current_spend: float = 0.0
     pct_used: float = 0.0
+
+
+# --- Topology ---
+
+class AgentEdgeIn(BaseModel):
+    project_id: str
+    source_agent: str
+    target_agent: str
+    topology: str = "pipeline"  # pipeline | tree | debate
+    context_retention: float = 1.0  # α_{ik}
+
+
+class AgentEdgeOut(BaseModel):
+    source_agent: str
+    target_agent: str
+    topology: str
+    context_retention: float
+
+
+class TopologyIn(BaseModel):
+    """Declare a full agent topology in one call."""
+    project_id: str
+    topology: str = "pipeline"  # pipeline | tree | debate
+    agents: list[str]  # ordered list (pipeline) or flat list (debate)
+    edges: list[AgentEdgeIn] | None = None  # explicit edges override
+    supervisor: str | None = None  # for tree topology
+
+
+# --- Shapley Attribution ---
+
+class ShapleyOut(BaseModel):
+    agent_name: str
+    topology: str
+    direct_cost: float
+    propagation_cost: float
+    shapley_value: float
+    shapley_pct: float
+    details: dict[str, Any] | None = None
+
+
+class ShapleyReport(BaseModel):
+    project_id: str
+    topology: str
+    total_cost: float
+    agents: list[ShapleyOut]
+    sir_recommendations: list[dict[str, Any]] | None = None
 
 
 # --- Dashboard ---

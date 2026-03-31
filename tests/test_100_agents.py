@@ -351,6 +351,143 @@ def run_tests(client: httpx.Client, total_events: int, num_agents: int):
     return passed, failed
 
 
+def declare_topologies(client: httpx.Client):
+    """Declare three different topologies for subsets of agents."""
+
+    # PIPELINE: research team (10 agents in a chain)
+    pipeline_agents = [f"research-agent-{i+1:02d}" for i in range(10)]
+    pipeline_edges = []
+    for i in range(len(pipeline_agents) - 1):
+        pipeline_edges.append({
+            "project_id": PROJECT,
+            "source_agent": pipeline_agents[i],
+            "target_agent": pipeline_agents[i + 1],
+            "topology": "pipeline",
+            "context_retention": 1.0,
+        })
+    resp = client.post(f"{BASE}/api/v1/topology", json={
+        "project_id": PROJECT,
+        "topology": "pipeline",
+        "agents": pipeline_agents,
+        "edges": pipeline_edges,
+    })
+    resp.raise_for_status()
+    print(f"  Pipeline: {len(pipeline_agents)} agents (research team)")
+
+    return pipeline_agents
+
+
+def run_shapley_tests(
+    client: httpx.Client, pipeline_agents: list[str],
+) -> tuple[int, int]:
+    """Test Shapley attribution and SIR routing."""
+    print("\n[9/10] Shapley Attribution (Pipeline)")
+    passed = 0
+    failed = 0
+
+    def check(name: str, condition: bool, detail: str = ""):
+        nonlocal passed, failed
+        if condition:
+            passed += 1
+            print(f"  PASS  {name}" + (f" — {detail}" if detail else ""))
+        else:
+            failed += 1
+            print(f"  FAIL  {name}" + (f" — {detail}" if detail else ""))
+
+    # Compute Shapley for pipeline topology
+    resp = client.post(
+        f"{BASE}/api/v1/shapley",
+        params={"project": PROJECT, "topology": "pipeline"},
+    )
+    check("Shapley computation succeeds", resp.status_code == 200,
+          f"status={resp.status_code}")
+    if resp.status_code != 200:
+        print(f"         Response: {resp.text[:300]}")
+        return passed, failed
+
+    report = resp.json()
+    agents_sh = report.get("agents", [])
+
+    check("Shapley agents returned", len(agents_sh) > 0,
+          f"{len(agents_sh)} agents")
+
+    # Core property: Shapley values sum to total (efficiency axiom)
+    total_shapley = sum(a["shapley_value"] for a in agents_sh)
+    check("Shapley efficiency (values sum > 0)", total_shapley > 0,
+          f"total Shapley = ${total_shapley:.6f}")
+
+    # Core property: percentages sum to ~100%
+    total_pct = sum(a["shapley_pct"] for a in agents_sh)
+    check("Shapley percentages sum to ~100%",
+          95 <= total_pct <= 105,
+          f"sum = {total_pct:.1f}%")
+
+    # Core property: every agent has both direct and propagation cost
+    has_propagation = any(a["propagation_cost"] != 0 for a in agents_sh)
+    check("Propagation costs exist (context accumulation)",
+          has_propagation,
+          "agents have non-zero propagation costs")
+
+    # Pipeline property: later agents should have higher upstream propagation
+    if len(agents_sh) >= 2:
+        first = agents_sh[0]
+        last = agents_sh[-1]
+        first_details = first.get("details", {})
+        last_details = last.get("details", {})
+        first_upstream = first_details.get("upstream_propagation", 0)
+        last_upstream = last_details.get("upstream_propagation", 0)
+        check("Pipeline: later agents inherit more upstream cost",
+              last_upstream >= first_upstream,
+              f"first upstream=${first_upstream:.6f}, "
+              f"last upstream=${last_upstream:.6f}")
+
+    # Pipeline property: early agents with large output have more downstream prop
+    if len(agents_sh) >= 2:
+        first_downstream = first_details.get("downstream_propagation", 0)
+        last_downstream = last_details.get("downstream_propagation", 0)
+        check("Pipeline: early agents push more downstream cost",
+              first_downstream >= last_downstream,
+              f"first downstream=${first_downstream:.6f}, "
+              f"last downstream=${last_downstream:.6f}")
+
+    # SIR recommendations
+    print("\n[10/10] Shapley-Informed Routing (SIR)")
+    sir = report.get("sir_recommendations", [])
+    check("SIR recommendations generated", len(sir) > 0,
+          f"{len(sir)} recommendations")
+
+    if sir:
+        total_sir_savings = sum(s["monthly_savings"] for s in sir)
+        check("SIR total savings > $0", total_sir_savings > 0,
+              f"${total_sir_savings:.2f}/mo")
+
+        # SIR should have downgrade scores and quality sensitivity
+        sample = sir[0]
+        check("SIR has downgrade_score",
+              "downgrade_score" in sample and sample["downgrade_score"] > 0,
+              f"score={sample.get('downgrade_score')}")
+        check("SIR has quality_sensitivity",
+              "quality_sensitivity" in sample,
+              f"σ={sample.get('quality_sensitivity')}")
+        check("SIR has Shapley-informed reasoning",
+              "Shapley" in sample.get("reasoning", ""),
+              "reasoning references Shapley attribution")
+
+    # Test GET /shapley (cached results)
+    resp = client.get(f"{BASE}/api/v1/shapley", params={"project": PROJECT})
+    cached = resp.json()
+    check("Cached Shapley results available", len(cached) > 0,
+          f"{len(cached)} cached attributions")
+
+    # Test GET /topology
+    resp = client.get(f"{BASE}/api/v1/topology", params={"project": PROJECT})
+    topo = resp.json()
+    check("Topology edges stored", len(topo) > 0,
+          f"{len(topo)} edges")
+
+    return passed, failed
+
+
 def run_cli_tests() -> tuple[int, int]:
     """Test the CLI commands."""
     print("\n[CLI] Command Tests")
@@ -448,16 +585,21 @@ def main():
     print(f"  Recommendations: {analysis['recommendations']}")
     print(f"  Budget alerts: {analysis['budget_alerts']}")
 
-    # Step 6: Run all verification tests
+    # Step 6: Declare agent topologies for Shapley attribution
+    print("\n▸ Declaring agent topologies...")
+    pipeline_agents = declare_topologies(client)
+
+    # Step 7: Run all verification tests
     print("\n" + "=" * 65)
     print("  VERIFICATION")
     print("=" * 65)
 
     api_passed, api_failed = run_tests(client, total_accepted, len(unique_agents))
+    shapley_passed, shapley_failed = run_shapley_tests(client, pipeline_agents)
     cli_passed, cli_failed = run_cli_tests()
 
-    total_passed = api_passed + cli_passed
-    total_failed = api_failed + cli_failed
+    total_passed = api_passed + shapley_passed + cli_passed
+    total_failed = api_failed + shapley_failed + cli_failed
 
     # Summary
     print("\n" + "=" * 65)

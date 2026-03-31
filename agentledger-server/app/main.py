@@ -8,7 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine
 from app.models import Base
-from app.routes import events, agents, waste, recommendations, budgets, dashboard, analyze
+from app.routes import (
+    events, agents, waste, recommendations, budgets,
+    dashboard, analyze, topology, shapley,
+)
 
 
 @asynccontextmanager
@@ -41,6 +44,8 @@ app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendati
 app.include_router(budgets.router, prefix="/api/v1", tags=["budgets"])
 app.include_router(dashboard.router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(analyze.router, prefix="/api/v1", tags=["analyze"])
+app.include_router(topology.router, prefix="/api/v1", tags=["topology"])
+app.include_router(shapley.router, prefix="/api/v1", tags=["shapley"])
 
 
 @app.get("/health")

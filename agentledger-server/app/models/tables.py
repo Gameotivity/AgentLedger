@@ -134,6 +134,70 @@ class Budget(Base):
     )
 
 
+class AgentEdge(Base):
+    """Agent interaction topology — directed edges in the agent DAG.
+
+    Encodes who-calls-who: (source_agent) → (target_agent) with context
+    retention factor α. Used by the Shapley attribution engine to compute
+    fair cost allocation per Theorem 3.2 (superadditivity of cost game).
+    """
+
+    __tablename__ = "agent_edges"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    project_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    source_agent: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_agent: Mapped[str] = mapped_column(String(255), nullable=False)
+    topology: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pipeline"
+    )  # pipeline | tree | debate
+    context_retention: Mapped[float] = mapped_column(
+        Float, default=1.0
+    )  # α_{ik} from Eq. 2
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_edge_project_src_tgt",
+            "project_id", "source_agent", "target_agent",
+            unique=True,
+        ),
+    )
+
+
+class ShapleyAttribution(Base):
+    """Shapley cost attribution results — fair cost allocation per agent.
+
+    Stores the decomposition: direct cost + propagation cost = Shapley value.
+    Computed from closed-form formulas (Theorems 4.1, 4.3, 4.4).
+    """
+
+    __tablename__ = "shapley_attributions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    project_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    agent_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    topology: Mapped[str] = mapped_column(String(20), nullable=False)
+    direct_cost: Mapped[float] = mapped_column(Float, default=0.0)
+    propagation_cost: Mapped[float] = mapped_column(Float, default=0.0)
+    shapley_value: Mapped[float] = mapped_column(Float, default=0.0)
+    shapley_pct: Mapped[float] = mapped_column(Float, default=0.0)
+    details_json: Mapped[dict | None] = mapped_column(JSON)
+    computed_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_shapley_project_agent",
+            "project_id", "agent_name",
+            unique=True,
+        ),
+    )
+
+
 class ModelPricing(Base):
     """Community-maintained pricing database."""
 
